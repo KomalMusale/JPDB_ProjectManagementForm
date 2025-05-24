@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Project Management Form</title>
+  <script>
+    const dbName = "COLLEGE-DB";
+    const relationName = "PROJECT-TABLE";
+    const baseURL = "http://api.login2explore.com:5577";
+    const connToken = "90934634|-31949206313632551|90956442";
+
+    function disableAllExceptID() {
+      document.getElementById("projectName").disabled = true;
+      document.getElementById("assignedTo").disabled = true;
+      document.getElementById("assignmentDate").disabled = true;
+      document.getElementById("deadline").disabled = true;
+      document.getElementById("saveBtn").disabled = true;
+      document.getElementById("updateBtn").disabled = true;
+      document.getElementById("resetBtn").disabled = true;
+      document.getElementById("projectId").disabled = false;
+      document.getElementById("projectId").focus();
+    }
+
+    function enableFields(forUpdate = false) {
+      document.getElementById("projectName").disabled = false;
+      document.getElementById("assignedTo").disabled = false;
+      document.getElementById("assignmentDate").disabled = false;
+      document.getElementById("deadline").disabled = false;
+      document.getElementById("resetBtn").disabled = false;
+      if (forUpdate) {
+        document.getElementById("updateBtn").disabled = false;
+      } else {
+        document.getElementById("saveBtn").disabled = false;
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("projectForm").reset();
+      disableAllExceptID();
+    }
+
+    function validateForm() {
+      return (
+        document.getElementById("projectId").value.trim() !== "" &&
+        document.getElementById("projectName").value.trim() !== "" &&
+        document.getElementById("assignedTo").value.trim() !== "" &&
+        document.getElementById("assignmentDate").value.trim() !== "" &&
+        document.getElementById("deadline").value.trim() !== ""
+      );
+    }
+
+    function getProject() {
+      const id = document.getElementById("projectId").value.trim();
+      if (id === "") {
+        alert("Enter Project ID");
+        return;
+      }
+
+      const getReq = {
+        token: connToken,
+        dbName: dbName,
+        rel: relationName,
+        cmd: "GET_BY_KEY",
+        key: { "Project-ID": id }
+      };
+
+      fetch(`${baseURL}/api/irl`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(getReq)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.data) {
+          // Record exists
+          const project = data.data.record;
+          document.getElementById("projectId").value = project["Project-ID"];
+          document.getElementById("projectName").value = project["Project-Name"];
+          document.getElementById("assignedTo").value = project["Assigned-To"];
+          document.getElementById("assignmentDate").value = project["Assignment-Date"];
+          document.getElementById("deadline").value = project["Deadline"];
+
+          enableFields(true);
+          document.getElementById("projectId").disabled = true;
+          document.getElementById("projectName").focus();
+        } else {
+          // New record
+          enableFields(false);
+          document.getElementById("projectName").focus();
+        }
+      });
+    }
+
+    function saveProject() {
+      if (!validateForm()) {
+        alert("All fields are required!");
+        return;
+      }
+
+      const data = {
+        "Project-ID": document.getElementById("projectId").value.trim(),
+        "Project-Name": document.getElementById("projectName").value.trim(),
+        "Assigned-To": document.getElementById("assignedTo").value.trim(),
+        "Assignment-Date": document.getElementById("assignmentDate").value.trim(),
+        "Deadline": document.getElementById("deadline").value.trim()
+      };
+
+      const putReq = {
+        token: connToken,
+        dbName: dbName,
+        rel: relationName,
+        cmd: "PUT",
+        record: data
+      };
+
+      fetch(`${baseURL}/api/iml`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(putReq)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("Project Saved Successfully!");
+        resetForm();
+      });
+    }
+
+    function updateProject() {
+      if (!validateForm()) {
+        alert("All fields are required!");
+        return;
+      }
+
+      const data = {
+        "Project-ID": document.getElementById("projectId").value.trim(),
+        "Project-Name": document.getElementById("projectName").value.trim(),
+        "Assigned-To": document.getElementById("assignedTo").value.trim(),
+        "Assignment-Date": document.getElementById("assignmentDate").value.trim(),
+        "Deadline": document.getElementById("deadline").value.trim()
+      };
+
+      const updateReq = {
+        token: connToken,
+        dbName: dbName,
+        rel: relationName,
+        cmd: "UPDATE",
+        record: data
+      };
+
+      fetch(`${baseURL}/api/iml`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateReq)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("Project Updated Successfully!");
+        resetForm();
+      });
+    }
+
+    window.onload = disableAllExceptID;
+  </script>
+</head>
+<body>
+  <h2>Project Management Form</h2>
+  <form id="projectForm" onsubmit="event.preventDefault();">
+    <label>Project ID (Primary Key):</label><br>
+    <input type="text" id="projectId" onblur="getProject()" /><br><br>
+
+    <label>Project Name:</label><br>
+    <input type="text" id="projectName" /><br><br>
+
+    <label>Assigned To:</label><br>
+    <input type="text" id="assignedTo" /><br><br>
+
+    <label>Assignment Date:</label><br>
+    <input type="date" id="assignmentDate" /><br><br>
+
+    <label>Deadline:</label><br>
+    <input type="date" id="deadline" /><br><br>
+
+    <button type="button" id="saveBtn" onclick="saveProject()">Save</button>
+    <button type="button" id="updateBtn" onclick="updateProject()">Update</button>
+    <button type="button" id="resetBtn" onclick="resetForm()">Reset</button>
+  </form>
+</body>
+</html>
